@@ -113,6 +113,7 @@ def tobs():
 # return JSON list of min, avg, and mx temp for given start or start-end range
 @app.route("/api/v1.0/<start>")
 def get_temp_start(start):
+    # print(f"get_temp_start: {start}")
     # Create our session (link) from Python to the DB
     session = Session(engine)
     # calculate min,max, and avg for all dates >= start date
@@ -122,11 +123,12 @@ def get_temp_start(start):
               func.max(Measurement.tobs)).\
               filter(Measurement.date >= start).\
               group_by(Measurement.date).all()
-   
+
 # Convert list of tuples into normal list
     all_tobs =  []
-    for min, avg, max in results:
+    for temp_date, min, avg, max in results:
         tobs_dict = {}
+        tobs_dict["Date"] = temp_date
         tobs_dict["Min"] = min
         tobs_dict["Avg"] = avg
         tobs_dict["Max"] = max
@@ -138,23 +140,22 @@ def get_temp_start(start):
 #############################################################################################
 
 # calcualte min, max, and avg for date between start and end date inclusive
-@app.route("/api/v1.0/<start>/<end>")
-def get_temp_end(start,end):
-
+@app.route("/api/v1.0/<begining_date>/<end_date>")
+def get_temp_end(begining_date, end_date):
+    print(f"----------------------------------get_temp_end: {begining_date, end_date}")
     session = Session(engine)
 
-    results = session.query(Measurement.date,\
-              func.min(Measurement.tobs),\
-              func.avg(Measurement.tobs),\
-              func.max(Measurement.tobs)).\
-             filter(Measurement.date >= start, Measurement.date <= end).\
-             group_by(Measurement.date).all()
-   
+    results = session.query(
+            func.min(Measurement.tobs),\
+            func.avg(Measurement.tobs),\
+            func.max(Measurement.tobs)).\
+            filter(Measurement.date >= begining_date, Measurement.date <= end_date).all()
+            
+    print(f"----------------------------------------{results}")
     # Convert list of tuples into normal list
     results_list =  []
-    for date, min, avg, max in results:
+    for min, avg, max in results:
         results_list_dict =  {}
-        results_list_dict["Date"] = date
         results_list_dict["Min"] = min
         results_list_dict["Avg"] = avg
         results_list_dict["Max"] = max
